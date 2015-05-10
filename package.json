@@ -1,0 +1,26 @@
+{
+  "name": "tiny-style",
+  "version": "1.0.0",
+  "description": "tiny css file resources parser and merge utils",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "files": [
+    "index.js",
+    "lib/*.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jetiny/tiny-style"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jetiny/tiny-style/issues"
+  },
+  "homepage": "https://github.com/jetiny/tiny-style",
+  "dependencies": {
+    "fastparse": "^1.0.0"
+  }
+}
