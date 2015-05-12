@@ -3,19 +3,6 @@ var parseSource = require("./lib/parseSource"),
 	queue = require('tiny-queue'),
 	Url = require('./lib/url');
 
-/*
-
-css 依赖及资源处理
-	url://file.css
-	data://
-	./file.css
-	/file.css
-	file.css
-css 合并
-css 压缩
-
-*/
-
 var col = require('tiny-col');
 
 
@@ -68,48 +55,22 @@ function createParser (options) {
 
 var Context = {
 	directory : './public',
-	assetsPaths: {
-		'images': ['png', 'jpg', 'gif', 'svg'] ,
-		'styles': ['css'] ,
-		'fonts':  ['woff', 'woff2', 'ttf', 'eot'] // 'svg'
-	},
 	combine : true,   // 合并外链css到一个文件
 	imageData: true,  // 将图片转换为data:image
-	imageDataFilters: [
-		function (img, asset) {
-			return false; // return true;
-		}
-	], //过滤器
 	imageFile: true,  // 将data:image 转换为文件
-	imageFileFilters: [
-		function (img, asset) {
-			return false; // return true;
-		}
-	], //过滤器
 };
-
-Context.load = function (url, cb) {
-	
-};
-
-Context.save = function (url, data, cb) {
-	
-};
-
 
 var Options = {
-	stylePath:'./css',
-	imagePath:'./images',
-	fontPath:'./fonts',
 	extractImageDataUrl: true,
 };
 
 function initOptionsFilter(options, name, vals) {
 	if (!options[name]) {
 		options[name] = [];
-	};
+	}
 	var filters = options[name];
-	filters.push.apply(filters, vals);
+	if (vals)
+		filters.push.apply(filters, vals);
 }
 
 function makeFileTypeFilter(type, extensions) {
@@ -119,28 +80,31 @@ function makeFileTypeFilter(type, extensions) {
 			it.fileType = type;
 			return true;
 		}
-	}
+	};
 }
 
 function makeAssetPathFilter(type, dir) {
 	return function(it) {
-		if (it.fileType === 'type') {
-			it.distDir = dir;
+		if (it.fileType === type) {
+			it.assetPath = dir;
 			return true;
 		}
-	}
+	};
 }
 
 function initOptions(options) {
-	initOptionsFilter(options, 'assets', [
+	initOptionsFilter(options, 'assetPath', [
 		makeAssetPathFilter('image', 'images'),
 		makeAssetPathFilter('font', 'fonts'),
 		makeAssetPathFilter('css', 'css')
 	]);
 	initOptionsFilter(options, 'fileType', [
-		makeFileTypeFilter('image', 'png|gif|jpg|svg|jpeg'),
+		makeFileTypeFilter('image', 'png|gif|jpg|svg|jpeg|ico'),
 		makeFileTypeFilter('font', 'woff|woff2|ttf|eot'),
 		makeFileTypeFilter('css', 'css')
+	]);
+	initOptionsFilter(options, 'readFile', [
+		
 	]);
 	options.emitFilters = function (type, context, func) {
 		var filters = getFilters(type, options, context);
@@ -153,7 +117,12 @@ function initOptions(options) {
 			}
 			return r;
 		}
-	}
+	};
+	options.value = function (type, context) {
+		if (type in context)
+			return context[type];
+		return options[type];
+	};
 }
 
 function getFilters(type, opts, context) {
@@ -188,12 +157,19 @@ var cssText = [
 ].join('\n');
 
 Parser(cssText, function (next, it, control) {
-	if (!Url.isMemoryUrl(it.url)) {
+
+	if (Url.isDataUrl(it.url)) {// image data url 
+
+	} else if (!Url.isMemoryUrl(it.url)) {
 		var emitResult = control.emitFilters('fileType', this, function(filter){
+			return filter(it);
+		});
+		var emitAssetPath = control.emitFilters('assetPath', this, function(filter){
 			return filter(it);
 		});
 		console.log(it);
 	}
+
 	next();
 }, function (err, css) {
 	col.done(css);
